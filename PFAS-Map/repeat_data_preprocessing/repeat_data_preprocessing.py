@@ -8,7 +8,10 @@ from sklearn.decomposition import PCA
 
 
 def prepare_rdkit_smiles(input_smiles_file):
-    df = pd.read_excel(input_smiles_file, usecols=['SMILES'], na_values=['-', ''])
+    if input_smiles_file.endswith('csv'):
+        df = pd.read_csv(input_smiles_file, usecols=['SMILES'], na_values=['-', ''])
+    elif input_smiles_file.endswith('xlsx'):
+        df = pd.read_excel(input_smiles_file, usecols=['SMILES'], na_values=['-', ''])
     # STEP ONE Remove PFASs with NO SMILES
     df.dropna(inplace=True)
     # STEP TWO Convert Input SMILES to RDKit SMILES (including removing salts and extract PFAS units from complexes)
@@ -26,7 +29,7 @@ def prepare_rdkit_smiles(input_smiles_file):
 
 if __name__ == "__main__":
     # create rdkit smiles
-    smiles_csv = "input_data/EPA_PFAS_MASTERLIST-2020-05-04.xlsx"
+    smiles_csv = "PFAS-Map/repeat_data_preprocessing/input_data/Chemical List PFASSTRUCT-2022-09-27.csv"
     df_smiles = prepare_rdkit_smiles(smiles_csv)
 
     # calculate padel descriptors
@@ -65,8 +68,8 @@ if __name__ == "__main__":
 
     df_for_pca = df_row_processed.drop(columns=['SMILES']).set_index('RDKIT_SMILES')
     df_screened_descriptors = pd.DataFrame(list(df_for_pca.columns), columns=['Descriptors'])
-    df_screened_descriptors.to_csv("output_data/List_of_selected_descriptors_repeat.csv", index=False)
-    df_for_pca.to_csv("output_data/Precalculated_EPA_PFAS_descriptors_data_repeat.csv")
+    df_screened_descriptors.to_csv("processed_data/List_of_selected_descriptors.csv", index=False)
+    df_for_pca.to_csv("processed_data/Precalculated_EPA_PFAS_descriptors_data.csv")
 
     # classify all epa pfass
     df = df_for_pca.copy()
@@ -77,7 +80,7 @@ if __name__ == "__main__":
     df_classification['First_Class'] = df_classification['Classification'].map(lambda x: x[0])
     df_classification['Second_Class'] = df_classification['Classification'].map(lambda x: x[1])
     df_classification.drop(columns='Classification', inplace=True)
-    df_classification.to_csv("output_data/EPA_PFAS_CLASSIFICATION_repeat.csv", index=False)
+    df_classification.to_csv("processed_data/EPA_PFAS_CLASSIFICATION.csv", index=False)
 
     # temporary code for pca 74
     # df_for_pca = pd.read_csv("output_data/Precalculated_EPA_PFAS_descriptors_data.csv").set_index("RDKIT_SMILES")
@@ -95,6 +98,6 @@ if __name__ == "__main__":
     # df_pca_result = pd.DataFrame(pca_result, columns=['PC-1', 'PC-2', 'PC-3'], index=df_for_pca.index)
     df_pca_result = pd.DataFrame(pca_result, columns=columns, index=df_for_pca.index)
     df_join = df_pca_result.join(df_classification.set_index("RDKIT_SMILES")).reset_index()
-    df_join.to_csv("output_data/Precalculated_EPA_PFAS_pca_classification_pc74_repeat.csv", index=False)
+    df_join.to_csv("processed_data/Precalculated_EPA_PFAS_pca_classification_pc74.csv", index=False)
 
 
